@@ -1,0 +1,21 @@
+{
+  "default_branch": "master",
+  "branches": [
+    "fix/circle-search-keyboard-navigation",
+    "master",
+    "origin",
+    "victor"
+  ],
+  "parent": {
+    "fix/circle-search-keyboard-navigation": "master",
+    "master": null,
+    "origin": "master",
+    "victor": "master"
+  },
+  "order": [
+    "master",
+    "fix/circle-search-keyboard-navigation",
+    "origin",
+    "victor"
+  ]
+}
