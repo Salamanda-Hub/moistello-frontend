@@ -21,7 +21,7 @@ function extractErrorMessage(err: unknown, fallback: string): string {
   return fallback;
 }
 
-interface CircleFilters {
+export interface CircleFilters {
   search?: string;
   status?: string;
   type?: string;
