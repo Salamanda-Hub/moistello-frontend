@@ -12,7 +12,7 @@ import { PageHeader } from "@/components/shared/page-header"
 import { Button, ButtonLink } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { useUIStore } from "@/stores/ui-store"
-import { post } from "@/lib/api-client"
+import { useWalletTransferStore } from "@/stores/wallet-transfer-store"
 import { formatAddress } from "@/lib/formatters"
 
 function WalletTransferContent() {
@@ -20,13 +20,14 @@ function WalletTransferContent() {
   const initialRecipient = searchParams.get("recipient") || searchParams.get("address") || ""
 
   const addToast = useUIStore((s) => s.addToast)
+  const isPending = useWalletTransferStore((s) => s.isPending)
+  const submitTransfer = useWalletTransferStore((s) => s.submitTransfer)
 
   const [recipient, setRecipient] = useState(initialRecipient)
   const [amount, setAmount] = useState("")
   const [currency, setCurrency] = useState<"USDC" | "XLM">("USDC")
   const [memo, setMemo] = useState("")
   const [step, setStep] = useState<"form" | "confirm" | "success">("form")
-  const [isSubmitting, setIsSubmitting] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [txnHash, setTxnHash] = useState<string | null>(null)
 
@@ -66,23 +67,25 @@ function WalletTransferContent() {
   }
 
   const handleConfirm = async () => {
-    setIsSubmitting(true)
     setError(null)
     try {
-      const res = await post<{ txnHash?: string }>("/api/wallet/transfer", {
+      const res = await submitTransfer({
         recipient,
         amount: parseFloat(amount),
         currency,
         memo,
       })
+
+      // A second click is ignored by the store while the first request is
+      // pending. Do not treat that ignored invocation as a successful send.
+      if (!res) return
+
       setTxnHash(res.txnHash || "tx_mock_hash_stellar")
       setStep("success")
       addToast({ type: "success", title: "Transfer completed successfully" })
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Transfer failed. Please try again.")
       setStep("form")
-    } finally {
-      setIsSubmitting(false)
     }
   }
 
@@ -195,16 +198,19 @@ function WalletTransferContent() {
             <Button
               variant="outline"
               onClick={() => setStep("form")}
+              disabled={isPending}
               className="w-1/2"
             >
               Back
             </Button>
             <Button
+              data-testid="confirm-transfer-button"
               onClick={handleConfirm}
-              disabled={isSubmitting}
+              disabled={isPending}
+              isLoading={isPending}
               className="w-1/2"
             >
-              {isSubmitting ? "Sending..." : "Confirm & Send"}
+              {isPending ? "Sending..." : "Confirm & Send"}
             </Button>
           </div>
         </div>

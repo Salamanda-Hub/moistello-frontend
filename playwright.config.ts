@@ -10,6 +10,11 @@ export default defineConfig({
   webServer: {
     command: "npm run dev",
     url: "http://localhost:1110",
+    // Keep mocked API calls same-origin so the development CSP allows the
+    // Playwright route handlers to intercept them.
+    env: {
+      NEXT_PUBLIC_API_URL: "http://localhost:1110/v1",
+    },
     reuseExistingServer: !process.env.CI,
     timeout: 120_000,
   },

@@ -14,6 +14,9 @@ export interface MockCalls {
   walletCreations: unknown[]
   circleCreates: unknown[]
   contributionPosts: unknown[]
+  transferPosts: unknown[]
+  /** Optional delay used to keep a transfer request pending in e2e tests. */
+  transferDelayMs?: number
 }
 
 export interface MockAppFixtures {
@@ -155,6 +158,8 @@ export function createMockCalls(): MockCalls {
     walletCreations: [],
     circleCreates: [],
     contributionPosts: [],
+    transferPosts: [],
+    transferDelayMs: 0,
   }
 }
 
@@ -322,6 +327,15 @@ export async function installMockApi(
 
     if (path === "/auth/wallet/init" && method === "POST") {
       await fulfillJson(route, success({ initialized: true }))
+      return
+    }
+
+    if (path === "/api/wallet/transfer" && method === "POST") {
+      calls.transferPosts.push(await parseJsonBody(request))
+      if (calls.transferDelayMs && calls.transferDelayMs > 0) {
+        await new Promise((resolve) => setTimeout(resolve, calls.transferDelayMs))
+      }
+      await fulfillJson(route, { txnHash: "transfer-hash-123456789" })
       return
     }
 
